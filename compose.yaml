@@ -1,0 +1,59 @@
+services:
+  dispatcher:
+    image: ${DISPATCHER_IMAGE:-msiniarskiitwl/brik2-dp-dispatcher:latest}
+    platform: linux/amd64
+    build:
+      context: .
+    init: true
+    restart: unless-stopped
+    # The UID/GID must be able to read the NFS share (check root_squash / all_squash on the export).
+    user: "${DISPATCHER_UID:-10001}:${DISPATCHER_GID:-10001}"
+    command: ["run"]
+    # Empty values fall back to the dispatcher's built-in defaults.
+    environment:
+      BRIK_DISPATCH_WATCH_DIR: /data/incoming
+      BRIK_DISPATCH_DB_PATH: /var/lib/brik-dispatch/state.db
+      BRIK_DISPATCH_POLL_INTERVAL: ${BRIK_DISPATCH_POLL_INTERVAL:-30}
+      BRIK_DISPATCH_STABLE_SCANS: ${BRIK_DISPATCH_STABLE_SCANS:-2}
+      BRIK_DISPATCH_MAX_CONCURRENT_JOBS: ${BRIK_DISPATCH_MAX_CONCURRENT_JOBS:-2}
+      BRIK_DISPATCH_MAX_ATTEMPTS: ${BRIK_DISPATCH_MAX_ATTEMPTS:-3}
+      BRIK_DISPATCH_LOG_LEVEL: ${BRIK_DISPATCH_LOG_LEVEL:-INFO}
+      BRIK_DISPATCH_LOG_FORMAT: ${BRIK_DISPATCH_LOG_FORMAT:-json}
+      BRIK_DISPATCH_KUBECONFIG: /run/secrets/kubeconfig
+      BRIK_DISPATCH_KUBE_CONTEXT: ${BRIK_DISPATCH_KUBE_CONTEXT:-}
+      BRIK_DISPATCH_NAMESPACE: ${BRIK_DISPATCH_NAMESPACE:-}
+      BRIK_DISPATCH_JOB_IMAGE: ${BRIK_DISPATCH_JOB_IMAGE:-}
+      BRIK_DISPATCH_JOB_IMAGE_PULL_SECRET: ${BRIK_DISPATCH_JOB_IMAGE_PULL_SECRET:-}
+      BRIK_DISPATCH_JOB_SERVICE_ACCOUNT: ${BRIK_DISPATCH_JOB_SERVICE_ACCOUNT:-}
+      BRIK_DISPATCH_JOB_ARGS: ${BRIK_DISPATCH_JOB_ARGS:-}
+      BRIK_DISPATCH_JOB_ENV: ${BRIK_DISPATCH_JOB_ENV:-}
+      BRIK_DISPATCH_JOB_CPU_REQUEST: ${BRIK_DISPATCH_JOB_CPU_REQUEST:-2}
+      BRIK_DISPATCH_JOB_MEMORY_REQUEST: ${BRIK_DISPATCH_JOB_MEMORY_REQUEST:-8Gi}
+      BRIK_DISPATCH_JOB_MEMORY_LIMIT: ${BRIK_DISPATCH_JOB_MEMORY_LIMIT:-16Gi}
+      BRIK_DISPATCH_JOB_GPU_RESOURCE: ${BRIK_DISPATCH_JOB_GPU_RESOURCE:-nvidia.com/gpu}
+      BRIK_DISPATCH_JOB_GPU_COUNT: ${BRIK_DISPATCH_JOB_GPU_COUNT:-1}
+      BRIK_DISPATCH_JOB_NFS_SERVER: ${BRIK_DISPATCH_JOB_NFS_SERVER:-}
+      BRIK_DISPATCH_JOB_NFS_PATH: ${BRIK_DISPATCH_JOB_NFS_PATH:-}
+      BRIK_DISPATCH_JOB_PVC_NAME: ${BRIK_DISPATCH_JOB_PVC_NAME:-}
+      BRIK_DISPATCH_JOB_MOUNT_PATH: ${BRIK_DISPATCH_JOB_MOUNT_PATH:-/mnt/brik/incoming}
+      BRIK_DISPATCH_JOB_ACTIVE_DEADLINE_SECONDS: ${BRIK_DISPATCH_JOB_ACTIVE_DEADLINE_SECONDS:-21600}
+      BRIK_DISPATCH_JOB_TTL_SECONDS_AFTER_FINISHED: ${BRIK_DISPATCH_JOB_TTL_SECONDS_AFTER_FINISHED:-3600}
+    volumes:
+      - type: bind
+        source: ${BRIK_INCOMING_DIR:-/mnt/brik/incoming}
+        target: /data/incoming
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: volume
+        source: dispatcher-state
+        target: /var/lib/brik-dispatch
+    secrets:
+      - kubeconfig
+
+secrets:
+  kubeconfig:
+    file: ${DISPATCHER_KUBECONFIG_FILE:-./secrets/kubeconfig}
+
+volumes:
+  dispatcher-state:

@@ -1,0 +1,10 @@
+**
+!pyproject.toml
+!uv.lock
+!README.md
+!src/
+!src/brik2_dp_dispatcher/
+!src/brik2_dp_dispatcher/**
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/

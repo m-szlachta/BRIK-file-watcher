@@ -1,0 +1,59 @@
+[project]
+name = "brik2-dp-dispatcher"
+version = "0.1.0"
+description = "Watches a directory and dispatches brik data processing Jobs to a Kubernetes (HPE PCAI) cluster"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "kubernetes>=31",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.4",
+    "typer>=0.12",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+brik-dispatch = "brik2_dp_dispatcher.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["brik2_dp_dispatcher*"]
+
+[tool.uv]
+package = true
+default-groups = ["test"]
+
+[dependency-groups]
+test = [
+    "pyright>=1.1.400",
+    "pytest>=8,<10",
+    "pytest-cov>=5",
+    "ruff>=0.8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.coverage.run]
+source = ["brik2_dp_dispatcher"]
+branch = true
+
+[tool.pyright]
+include = ["src"]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "basic"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true

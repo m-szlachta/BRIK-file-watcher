@@ -1,0 +1,46 @@
+# Minimal access for brik2-dp-dispatcher in ONE namespace (replace "brik" with the PCAI project namespace).
+# Apply with: kubectl apply -f deploy/k8s/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: brik2-dp-dispatcher
+  namespace: brik
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: brik2-dp-dispatcher
+  namespace: brik
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+  # Read-only, used to add container termination details (OOMKilled, exit code) to failure reasons.
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: brik2-dp-dispatcher
+  namespace: brik
+subjects:
+  - kind: ServiceAccount
+    name: brik2-dp-dispatcher
+    namespace: brik
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: brik2-dp-dispatcher
+---
+# Long-lived token for the dispatcher running outside the cluster. Prefer a short-lived token
+# (`kubectl create token brik2-dp-dispatcher -n brik --duration=...`) if your rotation process allows it.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: brik2-dp-dispatcher-token
+  namespace: brik
+  annotations:
+    kubernetes.io/service-account.name: brik2-dp-dispatcher
+type: kubernetes.io/service-account-token

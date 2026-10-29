@@ -1,0 +1,31 @@
+# Optional: expose the NFS share to Jobs through a PVC instead of an inline NFS volume.
+# Needed when the namespace enforces the "restricted" Pod Security profile, which forbids inline `nfs` volumes.
+# Then set BRIK_DISPATCH_JOB_PVC_NAME=brik-incoming and leave JOB_NFS_SERVER/JOB_NFS_PATH empty.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: brik-incoming
+spec:
+  capacity:
+    storage: 10Ti
+  accessModes: ["ReadOnlyMany"]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions: ["ro", "nfsvers=4.1"]
+  nfs:
+    server: nfs.example.local
+    path: /export/brik/incoming
+    readOnly: true
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: brik-incoming
+  namespace: brik
+spec:
+  accessModes: ["ReadOnlyMany"]
+  storageClassName: ""
+  volumeName: brik-incoming
+  resources:
+    requests:
+      storage: 10Ti
